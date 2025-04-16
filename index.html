@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Theme Color updates dynamically via JS -->
+    <meta name="theme-color" id="meta-theme-color" content="#2563eb">
+    <title>FinTrack Pro - Advanced Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Use Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+</head>
+<body>
+    <!-- Unified Sidebar Toggle Button (Outside App Layout) -->
+    <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Menu" aria-expanded="false" aria-controls="sidebar">
+        <span class="hamburger-icon"></span>
+    </button>
+
+    <!-- Notification Area -->
+    <div id="notification-area" class="notification-area" aria-live="polite"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar" aria-label="Main Navigation">
+            <div class="sidebar-header">
+                <h2 class="sidebar-logo">FinTrack Pro</h2>
+                <!-- Desktop toggle removed - unified control via #sidebar-toggle -->
+            </div>
+            <ul class="nav-menu" role="menu">
+                <li role="none"><a href="#dashboard" class="nav-link active" data-section="dashboard" role="menuitem" aria-current="page">📊 <span class="nav-text">Dashboard</span></a></li>
+                <li role="none"><a href="#finance" class="nav-link" data-section="finance" role="menuitem">💰 <span class="nav-text">Finance</span></a></li>
+                <li role="none"><a href="#budgets" class="nav-link" data-section="budgets" role="menuitem">🪙 <span class="nav-text">Budgets</span></a></li>
+                <li role="none"><a href="#goals" class="nav-link" data-section="goals" role="menuitem">🎯 <span class="nav-text">Goals</span></a></li>
+                <li role="none"><a href="#notes" class="nav-link" data-section="notes" role="menuitem">📝 <span class="nav-text">Notes</span></a></li>
+                <li role="none"><a href="#settings" class="nav-link" data-section="settings" role="menuitem">⚙️ <span class="nav-text">Settings</span></a></li>
+            </ul>
+             <div class="sidebar-footer">
+                 <p>FinTrack v0.1</p> <!-- Updated Version -->
+             </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="main-content">
+            <!-- == Dashboard Section == -->
+            <section id="section-dashboard" class="app-section active-section" aria-labelledby="dashboard-heading">
+                 <header class="section-header">
+                    <h1 id="dashboard-heading">Dashboard</h1>
+                    <p>Your financial overview and quick access.</p>
+                </header>
+                 <div class="dashboard-grid">
+                    <!-- Summary Cards -->
+                    <div class="card summary-card summary-item income"><h4>Total Income</h4><p id="db-total-income">₹0.00</p></div>
+                    <div class="card summary-card summary-item expense"><h4>Total Expenses</h4><p id="db-total-expense">₹0.00</p></div>
+                    <div class="card summary-card summary-item balance"><h4>Current Balance</h4><p id="db-current-balance">₹0.00</p></div>
+                    <div class="card summary-card summary-item goals"><h4>Active Goals</h4><p id="db-active-goals-count">0</p></div>
+
+                    <!-- Quick Views -->
+                    <div class="card quick-view quick-budget-overview">
+                        <h2>Budget Snapshot</h2>
+                        <div id="db-budget-summary" class="quick-list">
+                            <p class="text-muted">Loading budgets...</p>
+                        </div>
+                        <a href="#budgets" class="link-to-section" data-section-target="budgets">Manage Budgets →</a>
+                    </div>
+                    <div class="card quick-view">
+                        <h2>Recent Transactions</h2>
+                        <ul id="db-recent-transactions" class="quick-list">
+                            <li class="list-placeholder">No recent transactions.</li>
+                        </ul>
+                        <a href="#finance" class="link-to-section" data-section-target="finance">View All →</a>
+                    </div>
+                    <div class="card quick-view">
+                        <h2>Goal Progress</h2>
+                        <div id="db-goal-progress" class="quick-list">
+                            <p class="text-muted">No active goals.</p>
+                        </div>
+                        <a href="#goals" class="link-to-section" data-section-target="goals">View All Goals →</a>
+                    </div>
+                     <!-- Monthly Spending Trend Chart -->
+                     <div class="card quick-view" id="db-monthly-spending-trend">
+                         <h2>Monthly Spending Trend (Last 6 Months)</h2>
+                         <div class="chart-container" style="min-height: 250px; height: 30vh;">
+                            <canvas id="monthly-spending-chart"></canvas>
+                             <p id="db-no-spending-data" class="no-data-msg" style="display: none;">Not enough data for trend chart.</p>
+                         </div>
+                     </div>
+                </div>
+            </section>
+
+            <!-- == Finance Section == -->
+            <section id="section-finance" class="app-section" aria-labelledby="finance-heading">
+                 <header class="section-header">
+                    <h1 id="finance-heading">Finance Management</h1>
+                    <p>Track, filter, and manage your income and expenses.</p>
+                </header>
+                 <div class="finance-layout">
+                    <div class="finance-controls card">
+                        <h2>Controls & Filters</h2>
+                        <div class="filter-sort-controls">
+                             <div class="form-group">
+                                <label for="filter-type">Type</label>
+                                <select id="filter-type">
+                                    <option value="all">All</option>
+                                    <option value="income">Income</option>
+                                    <option value="expense">Expense</option>
+                                </select>
+                            </div>
+                             <div class="form-group">
+                                <label for="filter-category">Category</label>
+                                <select id="filter-category">
+                                    <option value="all">All Categories</option>
+                                    <!-- Options populated by JS -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="filter-date-start">Date Range</label>
+                                <div class="date-range">
+                                    <input type="date" id="filter-date-start" aria-label="Start Date">
+                                    <span>to</span>
+                                    <input type="date" id="filter-date-end" aria-label="End Date">
+                                </div>
+                            </div>
+                             <div class="form-group">
+                                <label for="search-transactions">Search</label>
+                                <input type="search" id="search-transactions" placeholder="Description or category...">
+                             </div>
+                            <div class="form-group">
+                                <label for="sort-transactions">Sort By</label>
+                                <select id="sort-transactions">
+                                    <option value="date-desc">Date (Newest First)</option>
+                                    <option value="date-asc">Date (Oldest First)</option>
+                                    <option value="amount-desc">Amount (Highest First)</option>
+                                    <option value="amount-asc">Amount (Lowest First)</option>
+                                     <option value="category-asc">Category (A-Z)</option>
+                                </select>
+                            </div>
+                            <button id="reset-filters-btn" class="btn btn-secondary btn-small">Reset Filters</button>
+                             <div id="filter-active-indicator" class="filter-indicator" style="display: none;">
+                                 <small>Filters are active.</small>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="finance-main">
+                        <div class="finance-summary-add">
+                            <div class="card summary-card finance-summary">
+                                 <h2>Overview (Filtered)</h2>
+                                <div class="summary-grid">
+                                    <div class="summary-item income"><h4>Income</h4><p id="fin-total-income">₹0.00</p></div>
+                                    <div class="summary-item expense"><h4>Expenses</h4><p id="fin-total-expense">₹0.00</p></div>
+                                    <div class="summary-item balance"><h4>Balance</h4><p id="fin-current-balance">₹0.00</p></div>
+                                </div>
+                                <small id="fin-summary-note" class="text-muted">Showing totals for currently filtered transactions.</small>
+                            </div>
+                            <div class="card add-transaction-card">
+                                <h2>Add New Transaction</h2>
+                                <form id="transaction-form">
+                                    <div class="form-group"><label for="description">Description</label><input type="text" id="description" placeholder="e.g., Salary, Groceries" required maxlength="100"></div>
+                                    <div class="form-group"><label for="amount">Amount (Positive for Income, Negative for Expense)</label><input type="number" id="amount" placeholder="-50.00 or 1500.00" step="any" required></div>
+                                    <div class="form-group"><label for="category">Category (Optional, for Expenses)</label>
+                                        <input list="category-suggestions" id="category" placeholder="e.g., Food, Transport" maxlength="50">
+                                        <datalist id="category-suggestions"><!-- Options populated by JS --></datalist>
+                                    </div>
+                                    <div class="form-group"><label for="date">Date</label><input type="date" id="date" required></div>
+                                    <div class="form-group form-check">
+                                        <input type="checkbox" id="recurring">
+                                        <label for="recurring">Save as recurring template?</label>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" id="add-transaction-btn">Add Transaction</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card transaction-history-card">
+                            <div class="card-header">
+                                <h2>Transaction History</h2>
+                                <span id="transaction-count">0 Transactions</span>
+                            </div>
+                            <ul id="transaction-list"><li class="list-placeholder">Loading transactions...</li></ul>
+                        </div>
+                    </div>
+
+                    <div class="finance-chart card expense-report-card">
+                        <h2>Expense Breakdown (Filtered)</h2>
+                        <div class="chart-container" style="min-height: 300px; height: 50vh;">
+                            <canvas id="expense-chart"></canvas> <!-- Keep canvas -->
+                            <p id="no-expense-data" class="no-data-msg" style="display: none;">No expense data matching filters.</p> <!-- Keep message -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- == Budgets Section == -->
+             <section id="section-budgets" class="app-section" aria-labelledby="budgets-heading">
+                 <header class="section-header">
+                    <h1 id="budgets-heading">Budget Management</h1>
+                    <p>Set and track your spending limits against current month's expenses.</p>
+                </header>
+                <div class="budgets-grid">
+                     <div class="card budget-settings-card">
+                        <h2>Overall Monthly Budget</h2>
+                        <form id="overall-budget-form">
+                            <div class="form-group">
+                                <label for="overall-budget-amount">Set Limit (Leave blank to remove)</label>
+                                <input type="number" id="overall-budget-amount" placeholder="e.g., 2000.00" min="0" step="any">
+                            </div>
+                            <button type="submit" class="btn btn-secondary" id="save-overall-budget-btn">Set/Update Budget</button>
+                        </form>
+                         <div id="overall-budget-summary" class="budget-summary-display">
+                            <p class="text-muted">No overall budget set.</p>
+                         </div>
+                     </div>
+                     <div class="card category-budgets-card">
+                        <h2>Category Budgets</h2>
+                        <form id="category-budget-form">
+                            <div class="form-group">
+                                <label for="category-budget-select">Select or Add Category</label>
+                                 <select id="category-budget-select"> <!-- Removed required -->
+                                     <option value="">-- Select Existing Category --</option>
+                                     <!-- Populated by JS -->
+                                 </select>
+                                 <input type="text" id="new-category-budget-name" placeholder="Or type NEW category name" style="margin-top: 5px;" maxlength="50">
+                            </div>
+                            <div class="form-group">
+                                <label for="category-budget-amount">Set Limit</label>
+                                <input type="number" id="category-budget-amount" placeholder="e.g., 300.00" required min="0" step="any">
+                            </div>
+                            <button type="submit" class="btn btn-secondary" id="add-category-budget-btn">Set/Update Category Budget</button>
+                        </form>
+                        <h3>Active Category Budgets:</h3>
+                        <ul id="category-budget-list" class="category-budget-list-display">
+                            <li class="list-placeholder">No category budgets set.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+             <!-- == Goals Section == -->
+            <section id="section-goals" class="app-section" aria-labelledby="goals-heading">
+                <header class="section-header">
+                    <h1 id="goals-heading">Financial Goals</h1>
+                    <p>Set and track your savings targets based on current balance.</p>
+                </header>
+                <div class="goals-grid">
+                    <div class="card add-goal-card">
+                        <h2>Add New Goal</h2>
+                        <form id="goal-form">
+                             <div class="form-group"><label for="goal-description">Goal Description</label><input type="text" id="goal-description" placeholder="e.g., Save for Vacation" required maxlength="100"></div>
+                             <div class="form-group"><label for="goal-target">Target Amount</label><input type="number" id="goal-target" placeholder="e.g., 2000.00" required min="1" step="any"></div>
+                             <button type="submit" class="btn btn-secondary" id="add-goal-btn">Add Goal</button>
+                        </form>
+                     </div>
+                    <div class="card goal-list-card">
+                        <h2>Your Goals</h2>
+                        <ul class="goal-list" id="goal-list">
+                             <li class="list-placeholder">Loading goals...</li>
+                             <!-- Goals rendered here -->
+                        </ul>
+                    </div>
+                 </div>
+            </section>
+
+            <!-- == Notes Section == -->
+            <section id="section-notes" class="app-section" aria-labelledby="notes-heading">
+                 <header class="section-header">
+                    <h1 id="notes-heading">Sticky Notes</h1>
+                    <p>Quick reminders, thoughts, and searchable notes.</p>
+                </header>
+                 <div class="notes-layout">
+                     <div class="notes-controls card">
+                         <h2>Add & Search Notes</h2>
+                         <form id="note-form">
+                             <div class="form-group">
+                                <label for="note-text">New Note</label>
+                                <textarea id="note-text" rows="5" placeholder="Write a quick note..." required maxlength="500"></textarea>
+                                <small class="text-muted"><span id="note-char-count">0</span>/500 characters</small>
+                            </div>
+                            <button type="submit" class="btn btn-accent" id="add-note-btn">Add Note</button>
+                        </form>
+                        <div class="form-group search-notes">
+                             <label for="search-notes-input">Search Notes</label>
+                             <input type="search" id="search-notes-input" placeholder="Search note content...">
+                        </div>
+                     </div>
+                    <div class="card notes-display-card">
+                        <h2>Your Notes</h2>
+                        <ul id="notes-list" class="notes-list-container">
+                            <li class="list-placeholder">Loading notes...</li>
+                            <!-- Notes rendered here -->
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- == Settings Section == -->
+            <section id="section-settings" class="app-section" aria-labelledby="settings-heading">
+                 <header class="section-header">
+                    <h1 id="settings-heading">Settings</h1>
+                    <p>Customize your app experience and manage data.</p>
+                </header>
+                <div class="settings-grid">
+                    <div class="card settings-card appearance-settings">
+                        <h2>Appearance & General</h2>
+                        <div class="setting-item">
+                            <label for="theme-toggle">Theme:</label>
+                            <button id="theme-toggle" class="btn btn-secondary">Toggle Theme</button>
+                        </div>
+                         <div class="setting-item">
+                            <label for="currency-select">Currency Symbol:</label>
+                            <select id="currency-select">
+                                <option value="₹">INR (₹)</option>
+                                <option value="$">USD ($)</option>
+                                <option value="€">EUR (€)</option>
+                                <option value="£">GBP (£)</option>
+                                <option value="¥">JPY (¥)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                     <div class="card settings-card category-management">
+                        <h2>Manage Categories</h2>
+                        <div class="form-group">
+                            <label for="new-custom-category">Add New Expense Category</label>
+                            <div class="add-category-control">
+                                <input type="text" id="new-custom-category" placeholder="e.g., Subscriptions" maxlength="50">
+                                <button id="add-custom-category-btn" class="btn btn-secondary btn-small">Add</button>
+                            </div>
+                        </div>
+                        <label id="category-list-label">Existing Categories:</label>
+                        <ul id="custom-category-list" class="category-list" aria-labelledby="category-list-label">
+                            <li class="list-placeholder">Loading...</li>
+                        </ul>
+                        <small class="text-muted">Deleting a category removes its budget (if any) but does not change existing transactions.</small>
+                    </div>
+
+                    <div class="card settings-card data-management">
+                        <h2>Data Management</h2>
+                         <div class="setting-item">
+                            <label>Backup Data:</label>
+                            <button id="backup-data-btn" class="btn btn-primary">Download Backup (JSON)</button>
+                         </div>
+                        <div class="setting-item">
+                           <label>Restore Data:</label>
+                            <div class="restore-controls">
+                               <!-- Hidden actual file input -->
+                               <input type="file" id="restore-data-input" accept=".json" aria-label="Select JSON backup file" style="display: none;">
+                               <!-- Visible button to trigger the input -->
+                               <button id="restore-data-btn" class="btn btn-secondary" type="button">Choose File & Restore</button>
+                            </div>
+                        </div>
+                         <div class="setting-item">
+                           <label>Clear Data:</label>
+                           <button id="clear-all-data-btn" class="btn btn-danger">Clear All Local Data</button>
+                        </div>
+                        <p class="warning-text"><small>Warning: Restore & Clear actions are irreversible! Always back up your data first.</small></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer in Main Content -->
+            <footer class="app-footer">
+                <p>© <span id="current-year">2024</span> FinTrack Pro. All data stored locally in your browser.</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- == Modal Dialogs == -->
+    <dialog id="edit-transaction-dialog" class="app-dialog" aria-labelledby="edit-dialog-title">
+         <form id="edit-transaction-form" method="dialog"> <!-- Add method="dialog" -->
+            <h2 id="edit-dialog-title">Edit Transaction</h2>
+            <div class="dialog-content"> <!-- Wrap content for padding -->
+                <input type="hidden" id="edit-transaction-id">
+                <div class="form-group"><label for="edit-description">Description</label><input type="text" id="edit-description" required maxlength="100"></div>
+                <div class="form-group"><label for="edit-amount">Amount</label><input type="number" id="edit-amount" step="any" required></div>
+                <div class="form-group"><label for="edit-category">Category (Optional, for Expenses)</label>
+                    <input list="edit-category-suggestions" id="edit-category" maxlength="50">
+                    <datalist id="edit-category-suggestions"><!-- Populated by JS --></datalist>
+                </div>
+                <div class="form-group"><label for="edit-date">Date</label><input type="date" id="edit-date" required></div>
+            </div>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-secondary" value="cancel" data-close-dialog>Cancel</button>
+                <button type="submit" class="btn btn-primary" value="save" id="save-edit-transaction-btn">Save Changes</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Edit Goal Dialog (Keep as is, seems fine) -->
+    <dialog id="edit-goal-dialog" class="app-dialog" aria-labelledby="edit-goal-dialog-title">
+         <form id="edit-goal-form" method="dialog">
+             <h2 id="edit-goal-dialog-title">Edit Savings Goal</h2>
+             <div class="dialog-content">
+                <input type="hidden" id="edit-goal-id">
+                <div class="form-group">
+                    <label for="edit-goal-description">Goal Description</label>
+                    <input type="text" id="edit-goal-description" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="edit-goal-target">Target Amount</label>
+                    <input type="number" id="edit-goal-target" step="any" min="0.01" required placeholder="e.g., 5000.00">
+                </div>
+             </div>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-secondary" data-close-dialog>Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Confirmation Dialog -->
+     <dialog id="confirm-dialog" class="app-dialog confirm-dialog-styling" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-message">
+        <h2 id="confirm-dialog-title">Confirmation</h2>
+        <p id="confirm-dialog-message" class="dialog-content">Are you sure?</p> <!-- Add class for padding -->
+        <div class="dialog-actions">
+            <button id="confirm-dialog-no" class="btn btn-secondary" value="no">No</button>
+            <button id="confirm-dialog-yes" class="btn btn-danger" value="yes">Yes</button>
+        </div>
+    </dialog>
+
+    <script src="main.js"></script>
+</body>
+</html>
